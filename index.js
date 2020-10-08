@@ -20,85 +20,91 @@ app.use(bodyParser.urlencoded({
 app.use(bodyParser.json());
 
 
+// app.get('/', (req, res) => {
+//     let resX = []
+//     let countries = require('./DATA/country.json');
+//     for (let i = 0; i < countries.length; i++) {
+//         resX.push(countries[i]);
+//         // console.log(countries[1])
+//     }
+//     res.send(resX);
+// });
+
+// app.post('/:country', (req, res) => {
+//     let state = require('./DATA/state');
+//     res.send(state[req.params.country]);
+// });
+
+// app.post('/:country/:state', (req, res)=>{
+//     let cities = require('./DATA/city.json');
+//     res.send(cities[req.params.state]);
+// });
+
+
 app.get('/', (req, res) => {
-    let resX = []
-    let countries = require('./DATA/country.json');
-    for (let i = 0; i < countries.length; i++) {
-        resX.push(countries[i].name);
+    let resX = [];
+    mongoose.connection.db.collection('country', function (err, collection) {
+        collection.find({}).toArray((err, data) => {
+
+            for (let index = 0; index < data.length; index++) {
+                resX.push(data[index].name);
+            }
+            res.send(resX);
+        });
+    });
+});
+
+
+app.get('/:country', (req, res) => {
+    let resX = [];
+
+    try {
+
+        mongoose.connection.db.collection('country', function (err, collection) {
+            collection.find({
+                name: req.params.country
+            }).toArray((err, data) => {
+                if(err){
+                    res.send(err);
+                }
+                else{
+                    for (let index = 0; index < data[0].state.length; index++) {
+                        resX.push(data[0].state[index].state_name);
+                    }
+    
+                    res.send(resX);
+                }
+    
+            });
+        });
+        
+    } catch (error) {
+        res.send(error);
     }
-    res.send(resX);
+    
 });
 
-app.post('/:country', (req, res) => {
-    let state = require('./DATA/state');
-    res.send(state[req.params.country]);
+app.get('/:country/:state', (req, res) => {
+    let resX = [];
+    mongoose.connection.db.collection('country', function (err, collection) {
+        collection.find({
+            name: req.params.country
+        }, {
+            state_name: req.params.state
+        }).toArray((err, data) => {
+
+            data[0].state.forEach(element => {
+                // console.log(element.state_name)
+                if (element.state_name == req.params.state) {
+                    res.send(element.cities)
+                }
+            });
+            // console.log(data[0].state[0].state_name)
+            // console.log(data[0].state[1].state_name)
+        });
+    });
 });
 
-
-app.post('/:country/:state', (req, res)=>{
-
-    let cities = require('./DATA/city.json');
-    res.send(cities[req.params.state]);
-
-});
-
-
-
-
-
-
-
-
-
-// app.post('/', async(req, res) => {
-
-
-
-//     mongoose.connection.db.collection('country',  async function  (err, collection) {
-
-//         collection.find({}).toArray((err, data)=>{
-
-//             res.send(data);
-
-//         });
-
-//     });
-
-// });
-
-// app.post('/:country',  (req, res)=>{
-//     // res.send(req.params.id);
-//     c = req.params.country;
-//     // res.send(c);
-//     mongoose.connection.db.collection('country',  async function  (err, collection) {
-
-//         collection.find( { state : c } ).toArray((err, data)=>{ 
-//             res.send(data[0]);
-//         });
-//     });
-// });
-
-// app.post('/:ccode', async(req, res) => {
-
-//     // ids = Number(req.params.id)
-//     ccodes = req.params.ccode;
-//     // scodes = Number(req.params.scode);
-
-//     mongoose.connection.db.collection('state',  async function  (err, collection) {
-//         collection.find({ ccode: ccodes}).toArray((err, data)=>{
-//             res.send(data);
-//         });
-//     });
-// });
-
-// app.post('/:ccode/:scode', async(req, res) => {
-
-//     mongoose.connection.db.collection('country',  async function  (err, collection) {
-//         collection.find({ id: ids}).toArray((err, data)=>{
-//             res.send(data);
-//         });
-//     });
-// });
 
 app.listen(8000, () => {
     console.log('server is start');
